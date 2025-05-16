@@ -142,9 +142,11 @@ class MOT:
         Args:
             dt (float): The time step for prediction. If -1, use the default dt of the object.
         """
+        # Predict the next state of all tracked objects
         for obj in self.tracked_objects.values():
             obj.predict(dt=dt, **kwargs)
 
+        # Predict the next state of all non tracked objects
         for obj in self.non_tracked_objects.values():
             obj.predict(dt=dt, **kwargs)
 

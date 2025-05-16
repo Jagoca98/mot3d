@@ -21,7 +21,6 @@ class Object:
         # Initialize the state of the object
         self.state = initial_state
 
-
     @property
     def state(self):
         return self.ukf.ukf.x
@@ -81,7 +80,7 @@ class Object:
 
     # Printing methods 
     def __repr__(self):
-        return f"Object(id={self.id}, class_name={self.class_name}, state={self.state}, appearance_counter={self.appearance_counter}, disappearance_counter={self.disappearance_counter})"
+        return f"Object(id={self.id}, class_name={self.class_name})"
     
 class ObjectBuilder:
     """
