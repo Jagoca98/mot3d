@@ -29,7 +29,7 @@ class MOT:
         self.disappearance_threshold = 5
 
         # Association strategy
-        self.association_strategy = HungarianAssociation(distance_threshold=1.0)
+        self.association_strategy = HungarianAssociation(distance_threshold=3.0)
 
 
     def add_tracker(self, detection) -> int:

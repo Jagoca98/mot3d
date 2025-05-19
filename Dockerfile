@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     nano \
     sudo \
     git-all \
+    libgl1 \
     sysvbanner \
     figlet
     
@@ -56,7 +57,9 @@ RUN pip install numpy --break-system-packages && \
     pip install tqdm --break-system-packages && \
     pip install scikit-learn --break-system-packages && \
     pip install matplotlib --break-system-packages && \
-    pip install filterpy --break-system-packages
+    pip install filterpy --break-system-packages && \
+    pip install opencv-python --break-system-packages && \
+    pip install numba --break-system-packages && \
 
 # Add the figlet command to the bashrc to display a welcome message
 RUN echo "figlet -f slant '3D tracking!'" >> ~/.bashrc

@@ -17,6 +17,7 @@ class Object:
         self.ukf = BasicUKF(dt=self.dt, x_init=initial_state)
         self.appearance_counter = 0
         self.disappearance_counter = 0
+        self.size = [1.5, 2, 5]  # [h, w, l] Default size of the object in meters
 
         # Initialize the state of the object
         self.state = initial_state

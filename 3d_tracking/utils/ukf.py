@@ -15,9 +15,9 @@ class BasicUKF(UKF):
                                                                                                             #     yaw, yaw_dot, yaw_dot_dot]
         
         # Set the process noise
-        std_f_xy = 0.5
+        std_f_xy = 1
         std_f_z = 0.3
-        std_f_yaw = 0.1
+        std_f_yaw = 0.5
 
         # Build the process noise matrix
         self.ukf.Q = np.zeros((12, 12))
@@ -27,7 +27,7 @@ class BasicUKF(UKF):
         self.ukf.Q[9:12, 9:12] = Q_discrete_white_noise(dim=3, dt=self.dt, var=std_f_yaw**2) # Q for yaw, yaw_dot, yaw_dot_dot
 
         # Set the measurement noise
-        std_r_xy = 0.2
+        std_r_xy = 0.02
         std_r_z = 1
         std_r_yaw = 0.1
         self.ukf.R = np.array([[std_r_xy**2, 0, 0, 0],
@@ -76,8 +76,10 @@ class BasicUKF(UKF):
         xout[6] += x[7] * dt + 0.5 * x[8] * dt**2
         xout[7] += x[8] * dt
         xout[8] += 0
-        xout[9] += x[10] * dt + 0.5 * x[11] * dt**2
-        xout[10] += x[11] * dt
+        xout[9] += x[10] * dt
+        xout[10] += 0
+        # xout[9] += x[10] * dt + 0.5 * x[11] * dt**2
+        # xout[10] += x[11] * dt
         xout[11] += 0
 
         return xout
@@ -162,10 +164,18 @@ class BasicUKF(UKF):
                                               self.normalize_angle(z_actual[3]))])
 
     def normalize_angle(self, x: float) -> float:
-        x = x % (2 * np.pi)
-        if x > np.pi:
-            x -= 2 * np.pi
+        # Normalize the angle to be in the range [-pi, pi]
+        # x = x % (2 * np.pi)
+        # if x > np.pi:
+        #     x -= 2 * np.pi
+        # return x
+        # Normalize the angle to be in the range [-pi/2, pi/2]
+        while x > np.pi / 2:
+            x -= np.pi
+        while x < -np.pi / 2:
+            x += np.pi
         return x
+    
     
     def get_pose(self) -> np.array:
         """
