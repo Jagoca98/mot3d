@@ -59,7 +59,7 @@ RUN pip install numpy --break-system-packages && \
     pip install matplotlib --break-system-packages && \
     pip install filterpy --break-system-packages && \
     pip install opencv-python --break-system-packages && \
-    pip install numba --break-system-packages && \
+    pip install numba --break-system-packages
 
 # Add the figlet command to the bashrc to display a welcome message
 RUN echo "figlet -f slant '3D tracking!'" >> ~/.bashrc

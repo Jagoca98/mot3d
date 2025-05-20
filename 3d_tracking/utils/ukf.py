@@ -8,39 +8,48 @@ class BasicUKF(UKF):
     def __init__(self, dt=0.1, x_init=np.ones(12)) -> None:
         self.dt = dt
 
-        self.sigma_points = MerweScaledSigmaPoints(n=12, alpha=0.1, beta=2.0, kappa=0.0)
-        self.ukf = UKF(dim_x=12, dim_z=4, dt=self.dt, fx=self.f_ca, hx=self.h_ca, points=self.sigma_points) # 12 [x, y, z;
+        self.sigma_points = MerweScaledSigmaPoints(n=15, alpha=0.1, beta=2.0, kappa=0.0)
+        self.ukf = UKF(dim_x=15, dim_z=7, dt=self.dt, fx=self.f_ca, hx=self.h_ca_size, points=self.sigma_points) # 12 [x, y, z;
                                                                                                             #     x_dot, y_dot, z_dot;
                                                                                                             #     x_dot_dot, y_dot_dot, z_dot_dot;
-                                                                                                            #     yaw, yaw_dot, yaw_dot_dot]
+                                                                                                            #     yaw, yaw_dot, yaw_dot_dot;
+                                                                                                            #     h, w, l]
         
         # Set the process noise
         std_f_xy = 1
         std_f_z = 0.3
         std_f_yaw = 0.5
-
+        std_size = 0.2
         # Build the process noise matrix
-        self.ukf.Q = np.zeros((12, 12))
+        self.ukf.Q = np.zeros((15, 15))
         self.ukf.Q[0:3, 0:3] = Q_discrete_white_noise(dim=3, dt=self.dt, var=std_f_xy**2)  # Q for x, x_dot, x_dot_dot
         self.ukf.Q[3:6, 3:6] = Q_discrete_white_noise(dim=3, dt=self.dt, var=std_f_xy**2)  # Q for y, y_dot, y_dot_dot
         self.ukf.Q[6:9, 6:9] = Q_discrete_white_noise(dim=3, dt=self.dt, var=std_f_z**2)   # Q for z, z_dot, z_dot_dot
         self.ukf.Q[9:12, 9:12] = Q_discrete_white_noise(dim=3, dt=self.dt, var=std_f_yaw**2) # Q for yaw, yaw_dot, yaw_dot_dot
+        self.ukf.Q[12, 12] = std_size**2  # Q for h
+        self.ukf.Q[13, 13] = std_size**2  # Q for w
+        self.ukf.Q[14, 14] = std_size**2  # Q for l
 
         # Set the measurement noise
         std_r_xy = 0.02
         std_r_z = 1
         std_r_yaw = 0.1
-        self.ukf.R = np.array([[std_r_xy**2, 0, 0, 0],
-                               [0, std_r_xy**2, 0, 0],
-                               [0, 0, std_r_z**2, 0],
-                               [0, 0, 0, std_r_yaw**2]])
+        std_r_size = 0.1
+        self.ukf.R = np.array([[std_r_xy**2, 0, 0, 0, 0, 0, 0],
+                               [0, std_r_xy**2, 0, 0, 0, 0, 0],
+                               [0, 0, std_r_z**2, 0, 0, 0, 0],
+                               [0, 0, 0, std_r_yaw**2, 0, 0, 0],
+                               [0, 0, 0, 0, std_r_size**2, 0, 0],
+                               [0, 0, 0, 0, 0, std_r_size**2, 0],
+                               [0, 0, 0, 0, 0, 0, std_r_size**2]])
 
         # Set the initial state
         self.ukf.x = x_init # initial state
-        self.ukf.P = np.diag([300**2, 3**2, 0.3**2,     # x, x_dot, x_dot_dot
-                              300**2, 3**2, 0.3**2,     # y, y_dot, y_dot_dot
-                              300**2, 3**2, 0.3**2,     # z, z_dot, z_dot_dot
-                              0.3**2, 0.001**2, 0.001**2])    # yaw, yaw_dot, yaw_dot_dot
+        self.ukf.P = np.diag([300**2, 3**2, 0.3**2,         # x, x_dot, x_dot_dot
+                              300**2, 3**2, 0.3**2,         # y, y_dot, y_dot_dot
+                              300**2, 3**2, 0.3**2,         # z, z_dot, z_dot_dot
+                              0.3**2, 0.001**2, 0.001**2,   # yaw, yaw_dot, yaw_dot_dot
+                              5**2, 5**2, 5**2])            # h, w, l
         
                 # Implement residuals to manage angle wrap
         self.ukf.residual_x = self.residual_x
@@ -62,6 +71,9 @@ class BasicUKF(UKF):
         # x[9] = yaw
         # x[10] = yaw_dot
         # x[11] = yaw_dot_dot
+        # x[12] = h
+        # x[13] = w
+        # x[14] = l
 
         # Initialize the output
         xout = x.copy()
@@ -81,6 +93,9 @@ class BasicUKF(UKF):
         # xout[9] += x[10] * dt + 0.5 * x[11] * dt**2
         # xout[10] += x[11] * dt
         xout[11] += 0
+        x[12] += 0
+        x[13] += 0
+        x[14] += 0
 
         return xout
     
@@ -98,6 +113,9 @@ class BasicUKF(UKF):
         # x[9] = yaw
         # x[10] = yaw_dot
         # x[11] = yaw_dot_dot
+        # x[12] = h
+        # x[13] = w
+        # x[14] = l
 
         # Initialize the output
         xout = x.copy()
@@ -115,12 +133,18 @@ class BasicUKF(UKF):
         xout[9] += x[10] * dt
         xout[10] += 0
         xout[11] += 0
+        xout[12] += 0
+        xout[13] += 0
+        xout[14] += 0
         
         return xout
     
     def f_const(self, x: np.array, dt: float) -> np.array:
         return x
 
+    def h_ca_size(self, x: np.array) -> np.array:
+        return np.array([x[0], x[3], x[6], x[9], x[12], x[13], x[14]]) # [x, y, z, yaw, h, w, l]
+    
     def h_ca(self, x: np.array) -> np.array:
         return np.array([x[0], x[3], x[6], x[9]]) # [x, y, z, yaw]
 
@@ -149,7 +173,10 @@ class BasicUKF(UKF):
                          self.normalize_angle(self.normalize_angle(x_pred[9]) - 
                                               self.normalize_angle(x_actual[9])),
                          x_pred[10] - x_actual[10],
-                         x_pred[11] - x_actual[11]])
+                         x_pred[11] - x_actual[11],
+                         x_pred[12] - x_actual[12],
+                         x_pred[13] - x_actual[13],
+                         x_pred[14] - x_actual[14]])
     
     def residual_z(self, z_pred: np.array, z_actual: np.array) -> np.array:
         """
@@ -161,7 +188,10 @@ class BasicUKF(UKF):
                          z_pred[1] - z_actual[1],
                          z_pred[2] - z_actual[2],
                          self.normalize_angle(self.normalize_angle(z_pred[3]) - 
-                                              self.normalize_angle(z_actual[3]))])
+                                              self.normalize_angle(z_actual[3])),
+                         z_pred[4] - z_actual[4],
+                         z_pred[5] - z_actual[5],
+                         z_pred[6] - z_actual[6]])
 
     def normalize_angle(self, x: float) -> float:
         # Normalize the angle to be in the range [-pi, pi]
@@ -189,6 +219,18 @@ class BasicUKF(UKF):
         yaw = self.ukf.x[9]
 
         return np.array([x, y, z, yaw])
+    
+    def get_size(self) -> np.array:
+        """
+        Get the size of the tracked object.
+        Returns:
+            np.array: The size of the object [h, w, l].
+        """
+        h = self.ukf.x[12]
+        w = self.ukf.x[13]
+        l = self.ukf.x[14]
+
+        return np.array([h, w, l])
 
 
 if __name__ == "__main__":

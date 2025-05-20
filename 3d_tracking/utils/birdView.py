@@ -38,8 +38,6 @@ class BirdView:
             x, y, z, yaw = obj.get_pose()
             _, w, l = obj.size  # [h, w, l]
 
-            yaw -= np.pi / 2  # Rotate from image coord to vehicle coord
-
             tracking_data = [x, y, l, w, yaw]
 
             center_bev = self._project_single_point((tracking_data[0], tracking_data[1]))

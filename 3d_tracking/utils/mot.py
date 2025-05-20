@@ -18,9 +18,6 @@ class MOT:
         self.non_tracked_objects = {}
         self.measurements = {}
 
-        # Object builder
-        self.object_builder = ObjectBuilder()
-
         # next id
         self.next_id = 0
 
@@ -28,8 +25,11 @@ class MOT:
         self.appearance_threshold = 5
         self.disappearance_threshold = 5
 
+        # Score threshold for the association
+        self.score_threshold = 0.0
+
         # Association strategy
-        self.association_strategy = HungarianAssociation(distance_threshold=3.0)
+        self.association_strategy = HungarianAssociation(distance_threshold=1.0)
 
 
     def add_tracker(self, detection) -> int:
@@ -52,6 +52,9 @@ class MOT:
         Demote objects that have not been seen enough times to be removed to not tracked.
         """
 
+        # Remove detections objects which low confidence score
+        detections = [detection for detection in detections if detection.score > self.score_threshold]
+
         # First associate the tracked objects with the potential candidates
         association_result_1 = self.association_strategy.associate(
             tracked_objects=self.tracked_objects,
@@ -60,7 +63,10 @@ class MOT:
 
         # For each association, update the tracked object
         for obj_id, detection in association_result_1["associations"].items():
-            self.tracked_objects[obj_id].update(detection.get_pose())
+            pose = detection.get_pose()
+            size = detection.size
+            new_meassurements = np.append(pose, size)
+            self.tracked_objects[obj_id].update(new_meassurements)
             self.tracked_objects[obj_id].on_detected()
 
 
@@ -72,7 +78,10 @@ class MOT:
 
         # For each new association, update the non tracked objects
         for obj_id, detection in association_result_2["associations"].items():
-            self.non_tracked_objects[obj_id].update(detection.get_pose())
+            pose = detection.get_pose()
+            size = detection.size
+            new_meassurements = np.append(pose, size)
+            self.non_tracked_objects[obj_id].update(new_meassurements)
             self.non_tracked_objects[obj_id].on_detected()
 
 

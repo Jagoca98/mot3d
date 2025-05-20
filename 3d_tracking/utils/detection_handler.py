@@ -55,13 +55,21 @@ class DetectionHandler:
                     continue
 
                 class_name = parts[2]
+
+                h = float(parts[10])
+                w = float(parts[11])
+                l = float(parts[12])
                 x = float(parts[13])
                 y = float(parts[14])
                 z = float(parts[15])
                 yaw = float(parts[16])
 
-                initial_state = np.array([x, 0, 0, y, 0, 0, z, 0, 0, yaw, 0, 0])
-                obj = ObjectBuilder.create(class_name, initial_state)
+                score = float(parts[17])
+
+                initial_state = np.array([x, 0, 0, y, 0, 0, z, 0, 0, yaw, 0, 0, h, w, l])
+                obj = ObjectBuilder.create(class_name=class_name, 
+                                           initial_state=initial_state,
+                                           score=score)
                 objects.append(obj)
 
         return objects
